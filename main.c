@@ -131,7 +131,7 @@ void autoSetting(int autoM) {
 }
 uint8_t stateSet(){
 	uint8_t key = readSW();
-
+	int adc = read_adc(0);
 	if(MainTemp >= 300 | ovHeatFlag) {
 		ovHeatFlag = 1;
 		return 1;
@@ -145,7 +145,7 @@ uint8_t stateSet(){
 			FireTemp = 0;
 			return 3;
 		}else{
-			if(read_adc(0) < 3000) {
+			if(adc < 3900) {
 				FireTemp = 1;
 				BUZZ_GPIO_Port -> BRR = BUZZ_Pin;
 				return 4;
@@ -284,8 +284,6 @@ void FireDecade(void){
 	}
 }
 
-
-
 void OvenActive(int totalTemp, int time){
 	int key = readSW();
 	static int fir = 1;
@@ -393,6 +391,7 @@ void gasRange(void){
 	lcd_puts(lcd_buff);
 
 	autoSetting(modenum);
+	if(modenum != 5)LED1_GPIO_Port->BSRR = LED1_Pin|LED2_Pin|LED3_Pin|LED4_Pin|LED5_Pin;
 
 	if(key == 41 & setTemp < 280) setTemp+= 20;
 	if(key == 51 & setTemp > 20 ) setTemp-= 20;
@@ -473,10 +472,10 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		int a = stateSet();
-		if(a != 2){
+		while(HAL_GPIO_ReadPin(SW_LOCK_GPIO_Port,SW_LOCK_Pin)){
 			gasRange();
 		}
-		if(a == 2) OvenSetting();
+		while(!HAL_GPIO_ReadPin(SW_LOCK_GPIO_Port,SW_LOCK_Pin)) OvenSetting();
 		/* USER CODE END WHILE */
 		/* USER CODE BEGIN 3 */
 	}
